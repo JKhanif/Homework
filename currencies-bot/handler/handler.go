@@ -33,9 +33,31 @@ type Handler struct {
 func (h *Handler) Handle(ctx context.Context, b *bot.Bot, update *models.Update) {
 
 	if update.Message.Text == "/start" {
+		baseCurrency := "RUB"
+
+		rates, err := h.FraClient.GetCurrencyRate(ctx, baseCurrency)
+		if err != nil {
+			fmt.Println("error FraClient.GetCurrencyRate: ", err)
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID: update.Message.Chat.ID,
+				Text:   "Error, try again later.",
+			})
+			return
+		}
+
+		var resp string = "<code>"
+		var supportedCurrencies = []string{CurrencyRub, CurrencyUsd, CurrencyEur, CurrencyTry, CurrencySar}
+		for _, cur := range supportedCurrencies {
+			if baseCurrency != cur {
+				resp += fmt.Sprintf("%s: %.2f\n", cur, rates[cur])
+			}
+		}
+		resp += "</code>"
+
 		b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID: update.Message.Chat.ID,
-			Text:   "Привет! Здесь ты можешь узнать курс валют, а также конвертировать их.",
+			ChatID:    update.Message.Chat.ID,
+			Text:      "Привет! Здесь ты можешь узнать курс валют, а также конвертировать их.\n" + resp,
+			ParseMode: models.ParseModeHTML,
 		})
 		return
 	}
