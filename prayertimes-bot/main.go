@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"prayertimes/clients/aladhan"
 	"prayertimes/handlers"
+	"prayertimes/service"
 
 	"github.com/go-telegram/bot"
 	"github.com/joho/godotenv"
@@ -16,7 +17,8 @@ func main() {
 	defer cancel()
 
 	aladhanClient := aladhan.New()
-	h := handlers.New(aladhanClient)
+	c := service.New(aladhanClient)
+	h := handlers.New(c)
 
 	opts := []bot.Option{
 		bot.WithDefaultHandler(h.Handle),
