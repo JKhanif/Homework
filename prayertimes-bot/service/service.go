@@ -43,10 +43,6 @@ func (s *Service) ResponsePrayerTime(ctx context.Context, city string) (string, 
 
 		prayerTime := time.Date(now.Year(), now.Month(), now.Day(), parsed.Hour(), parsed.Minute(), 0, 0, now.Location())
 
-		// if !now.Before(prayerTime) {
-		// 	currentIndex = i
-		// }
-
 		if nextPrayerFound == false && now.Before(prayerTime) {
 			nextPrayerFound = true
 			nextTP := prayerTime.Sub(now)
