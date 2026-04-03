@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:   
+  bot:
+    build: .
+    container_name: telegram-bot
+    restart: always
+    depends_on:
+      - redis
+    environment:
+      REDIS_ADDR: redis:6379
+      TG_BOT_TOKEN: ${TG_BOT_TOKEN}
+  redis:
+    image: redis:7
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
