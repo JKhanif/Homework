@@ -32,6 +32,7 @@ func (s *Service) ResponsePrayerTime(ctx context.Context, city string) (string, 
 	nextPrayerFound := false
 	resMessage := ""
 	now := time.Now()
+	//currentIndex := -1
 
 	for i, v := range timeStr {
 		parsed, err := time.Parse("15:04", v)
