@@ -1,4 +1,4 @@
-package handler
+package bot_handler
 
 import (
 	"context"
@@ -6,19 +6,21 @@ import (
 	"log"
 	"perfume-bot/repository"
 	"strconv"
-	"strings"
 
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
+	"github.com/minio/minio-go/v7"
 )
 
 type Handler struct {
-	repo *repository.Repository
+	repo  *repository.Repository
+	minio *minio.Client
 }
 
-func New(repo *repository.Repository) *Handler {
+func NewHandler(repo *repository.Repository, minio *minio.Client) *Handler {
 	return &Handler{
-		repo: repo,
+		repo:  repo,
+		minio: minio,
 	}
 }
 
@@ -30,17 +32,14 @@ func (h *Handler) BrandsCallbackHandler(ctx context.Context, b *bot.Bot, update 
 		ChatID: update.CallbackQuery.From.ID,
 		Action: models.ChatActionTyping,
 	})
-	b.SendMessage(ctx, &bot.SendMessageParams{
-		ChatID: update.CallbackQuery.From.ID,
-		Text:   "1, 2, 3",
-	})
-}
 
-func (h *Handler) CategoryCallbackHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
-	categoryID := strings.TrimPrefix(update.CallbackQuery.Data, "category_")
-	products, err := h.repo.GetProductsByCategoryID(ctx, categoryID)
+	brands, err := h.repo.GetAllBrands(ctx)
 	if err != nil {
-		log.Printf("Error repo.GetProductsByCategoryID: %v\n", err)
+
+	}
+
+	if err != nil {
+		log.Printf("Error repo.GetAllBrands: %v\n", err)
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: update.CallbackQuery.From.ID,
 			Text:   "Ошибка, попробуйте позже.",
@@ -48,38 +47,18 @@ func (h *Handler) CategoryCallbackHandler(ctx context.Context, b *bot.Bot, updat
 		return
 	}
 
-	if len(products) == 0 {
-		b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID: update.CallbackQuery.From.ID,
-			Text:   "В этой категории пока нет духов.",
-		})
-		return
+	var kb models.InlineKeyboardMarkup
+	kb.InlineKeyboard = make([][]models.InlineKeyboardButton, 0)
+	for _, b := range brands {
+		var row []models.InlineKeyboardButton
+		row = append(row, models.InlineKeyboardButton{Text: b.Title, CallbackData: "brand_" + strconv.Itoa(b.ID)})
+		kb.InlineKeyboard = append(kb.InlineKeyboard, row)
 	}
-
-	answer := ""
-
-	for _, p := range products {
-		answer += fmt.Sprintf(
-			"💎 %s\n🏷 Бренд: %s\n💰 Цена: %d\n\n%s\n\n",
-			p.Title,
-			p.Brand.Title,
-			p.PriceKopecks,
-			p.Description,
-		)
-	}
-
-	b.AnswerCallbackQuery(ctx, &bot.AnswerCallbackQueryParams{
-		CallbackQueryID: update.CallbackQuery.ID,
-	})
-	b.SendChatAction(ctx, &bot.SendChatActionParams{
-		ChatID: update.CallbackQuery.From.ID,
-		Action: models.ChatActionTyping,
-	})
 
 	b.SendMessage(ctx, &bot.SendMessageParams{
-		ChatID:    update.CallbackQuery.From.ID,
-		Text:      answer,
-		ParseMode: models.ParseModeHTML,
+		ChatID:      update.CallbackQuery.From.ID,
+		Text:        "Духи какого бренда вам интересны?",
+		ReplyMarkup: kb,
 	})
 }
 
@@ -118,8 +97,6 @@ func (h *Handler) CategoriesCallbackHandler(ctx context.Context, b *bot.Bot, upd
 }
 
 func (h *Handler) CatalogCallbackHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
-	answer := ""
-
 	b.AnswerCallbackQuery(ctx, &bot.AnswerCallbackQueryParams{
 		CallbackQueryID: update.CallbackQuery.ID,
 	})
@@ -139,14 +116,35 @@ func (h *Handler) CatalogCallbackHandler(ctx context.Context, b *bot.Bot, update
 	}
 
 	for _, p := range products {
-		answer += fmt.Sprintf("<b>%s</b> | %s\n\n%d₽\n\n", p.Title, p.Brand.Title, p.PriceKopecks)
-	}
+		var kb models.InlineKeyboardMarkup = models.InlineKeyboardMarkup{
+			InlineKeyboard: [][]models.InlineKeyboardButton{
+				{
+					{Text: "Подробнее", CallbackData: fmt.Sprintf("detailed_%d", p.ID)},
+				},
+				{
+					{Text: "В корзину", CallbackData: fmt.Sprintf("add_to_cart_%d", p.ID)},
+				},
+			},
+		}
 
-	b.SendMessage(ctx, &bot.SendMessageParams{
-		ChatID:    update.CallbackQuery.From.ID,
-		Text:      answer,
-		ParseMode: models.ParseModeHTML,
-	})
+		_, err := b.SendPhoto(ctx, &bot.SendPhotoParams{
+			ChatID: update.CallbackQuery.From.ID,
+			Photo: &models.InputFileString{
+				Data: p.MainPhotoFailID,
+			},
+			Caption:     fmt.Sprintf("<b>%s</b> | %s\n\n%d₽", p.Title, p.Brand.Title, p.Price),
+			ParseMode:   models.ParseModeHTML,
+			ReplyMarkup: kb,
+		})
+		if err != nil {
+			log.Printf("Error b.SendPhoto: %v\n", err)
+			b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID: update.CallbackQuery.From.ID,
+				Text:   "Ошибка, попробуйте позже.",
+			})
+			return
+		}
+	}
 }
 
 func (h *Handler) StartHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
