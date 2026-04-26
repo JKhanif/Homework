@@ -6,13 +6,17 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"perfume-bot/handler"
+	minio_cl "perfume-bot/clients/minio"
+	bot_handler "perfume-bot/handler/bot"
+	http_handler "perfume-bot/handler/http"
 	"perfume-bot/repository"
 
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
 func main() {
@@ -21,24 +25,37 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
-	defer cancel()
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
 
 	pool, err := pgxpool.New(ctx, os.Getenv("PG_DSN"))
 	if err != nil {
 		log.Fatalf("Error pgxpool new: %v", err)
 	}
+	defer pool.Close()
+
 	err = pool.Ping(ctx)
 	if err != nil {
 		log.Fatalf("Error postgre ping: %v", err)
 	}
-	defer pool.Close()
+
+	mcl, err := minio.New(os.Getenv("MINIO_ENDPOINT"), &minio.Options{
+		Creds: credentials.NewStaticV4(
+			os.Getenv("MINIO_ACCESS_KEY"),
+			os.Getenv("MINIO_SECRET_KEY"),
+			"",
+		),
+		Secure: false,
+	})
+	if err != nil {
+		log.Fatalf("minio init error: %v", err)
+	}
 
 	repo := repository.New(pool)
-	handler := handler.New(repo)
+	botHandler := bot_handler.NewHandler(repo, mcl)
 
 	opts := []bot.Option{
-		bot.WithDefaultHandler(handler.DefaultHandler),
+		bot.WithDefaultHandler(botHandler.DefaultHandler),
 	}
 
 	b, err := bot.New(os.Getenv("TG_BOT_TOKEN"), opts...)
@@ -47,14 +64,30 @@ func main() {
 		panic(err)
 	}
 
-	b.RegisterHandler(bot.HandlerTypeMessageText, "start", bot.MatchTypeCommand, handler.StartHandler)
-	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, "catalog", bot.MatchTypeExact, handler.CatalogCallbackHandler)
-	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, "categories", bot.MatchTypeExact, handler.CategoriesCallbackHandler)
-	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, "category_", bot.MatchTypePrefix, handler.CategoryCallbackHandler)
-	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, "brands", bot.MatchTypeExact, handler.BrandsCallbackHandler)
+	b.RegisterHandler(bot.HandlerTypeMessageText, "start", bot.MatchTypeCommand, botHandler.StartHandler)
+	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, "catalog", bot.MatchTypeExact, botHandler.CatalogCallbackHandler)
+	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, "categories", bot.MatchTypeExact, botHandler.CategoriesCallbackHandler)
+	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, "category_", bot.MatchTypePrefix, botHandler.CategoryCallbackHandler)
+	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, "brands", bot.MatchTypeExact, botHandler.BrandsCallbackHandler)
+	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, "brand_", bot.MatchTypePrefix, botHandler.BrandCallbackHandler)
 
 	setCommands(b, ctx)
-	b.Start(ctx)
+	go b.Start(ctx)
+
+	fileClient := minio_cl.New(mcl, os.Getenv("MINIO_BUCKET"), os.Getenv("MINIO_ENDPOINT"))
+
+	httpHandler := http_handler.NewHandler(repo, b, fileClient)
+
+	go func() {
+		httpHandler.Run(os.Getenv("PORT"))
+	}()
+
+	fmt.Println("Started")
+
+	// ждём Ctrl+C
+	<-ctx.Done()
+
+	fmt.Println("Shutting down...")
 }
 
 func setCommands(b *bot.Bot, ctx context.Context) {
