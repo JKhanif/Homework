@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"perfume-bot/repository"
-	"strconv"
 
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
@@ -22,78 +21,6 @@ func NewHandler(repo *repository.Repository, minio *minio.Client) *Handler {
 		repo:  repo,
 		minio: minio,
 	}
-}
-
-func (h *Handler) BrandsCallbackHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
-	b.AnswerCallbackQuery(ctx, &bot.AnswerCallbackQueryParams{
-		CallbackQueryID: update.CallbackQuery.ID,
-	})
-	b.SendChatAction(ctx, &bot.SendChatActionParams{
-		ChatID: update.CallbackQuery.From.ID,
-		Action: models.ChatActionTyping,
-	})
-
-	brands, err := h.repo.GetAllBrands(ctx)
-	if err != nil {
-
-	}
-
-	if err != nil {
-		log.Printf("Error repo.GetAllBrands: %v\n", err)
-		b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID: update.CallbackQuery.From.ID,
-			Text:   "Ошибка, попробуйте позже.",
-		})
-		return
-	}
-
-	var kb models.InlineKeyboardMarkup
-	kb.InlineKeyboard = make([][]models.InlineKeyboardButton, 0)
-	for _, b := range brands {
-		var row []models.InlineKeyboardButton
-		row = append(row, models.InlineKeyboardButton{Text: b.Title, CallbackData: "brand_" + strconv.Itoa(b.ID)})
-		kb.InlineKeyboard = append(kb.InlineKeyboard, row)
-	}
-
-	b.SendMessage(ctx, &bot.SendMessageParams{
-		ChatID:      update.CallbackQuery.From.ID,
-		Text:        "Духи какого бренда вам интересны?",
-		ReplyMarkup: kb,
-	})
-}
-
-func (h *Handler) CategoriesCallbackHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
-	b.AnswerCallbackQuery(ctx, &bot.AnswerCallbackQueryParams{
-		CallbackQueryID: update.CallbackQuery.ID,
-	})
-	b.SendChatAction(ctx, &bot.SendChatActionParams{
-		ChatID: update.CallbackQuery.From.ID,
-		Action: models.ChatActionTyping,
-	})
-
-	categories, err := h.repo.GetAllCategories(ctx)
-	if err != nil {
-		log.Printf("Error repo.GetAllCategories: %v\n", err)
-		b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID: update.CallbackQuery.From.ID,
-			Text:   "Ошибка, попробуйте позже.",
-		})
-		return
-	}
-
-	var kb models.InlineKeyboardMarkup
-	kb.InlineKeyboard = make([][]models.InlineKeyboardButton, 0)
-	for _, c := range categories {
-		var row []models.InlineKeyboardButton
-		row = append(row, models.InlineKeyboardButton{Text: c.Title, CallbackData: "category_" + strconv.Itoa(c.ID)})
-		kb.InlineKeyboard = append(kb.InlineKeyboard, row)
-	}
-
-	b.SendMessage(ctx, &bot.SendMessageParams{
-		ChatID:      update.CallbackQuery.From.ID,
-		Text:        "Выбирай по душе",
-		ReplyMarkup: kb,
-	})
 }
 
 func (h *Handler) CatalogCallbackHandler(ctx context.Context, b *bot.Bot, update *models.Update) {

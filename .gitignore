@@ -1,2 +1,14 @@
+# env
 .env
+
+# python
+**/venv/
+__pycache__/
+*.pyc
+
+# notes (если реально не нужны)
 sheet.md
+
+# OS / IDE
+.vscode/
+.idea/
