@@ -7,11 +7,9 @@ type Product struct {
 	Title           string    `db:"title"`
 	Price           int       `db:"price"`
 	CreatedAt       time.Time `db:"created_at"`
-	Brand           Brand     `json:"-"` // для чтения
+	Brand           Brand     `db:"brand_id"`
 	Description     string
 	MainPhotoFailID string
-
-	BrandID int `json:"brand_id" db:"brand_id"` // для записи
 }
 
 type ProductPhoto struct {

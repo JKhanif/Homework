@@ -7,7 +7,7 @@ import (
 )
 
 func (r *Repository) GetAllBrands(ctx context.Context) ([]db_model.Brand, error) {
-	rows, err := r.db.Query(ctx, `SELECT id, title, description FROM brands`)
+	rows, err := r.db.Query(ctx, queryGetAllBrands)
 	if err != nil {
 		return nil, fmt.Errorf("Error db.Query: %w", err)
 	}
@@ -29,21 +29,7 @@ func (r *Repository) GetAllBrands(ctx context.Context) ([]db_model.Brand, error)
 }
 
 func (r *Repository) GetProductsByBrandID(ctx context.Context, brandID string) ([]db_model.Product, error) {
-	rows, err := r.db.Query(ctx, `SELECT
-									p.id,
-									p.title,
-									p.description,
-									p.price,
-									b.id,
-									b.title,
-									b.description,
-									pp.tg_file_id
-								FROM products p
-								JOIN brands b ON b.id = p.brand_id
-								JOIN product_photos pp ON pp.product_id = p.id 
-								WHERE p.brand_id = $1
-								  AND pp.is_main = true;
-									`, brandID)
+	rows, err := r.db.Query(ctx, queryGetProductsByBrandID, brandID)
 	if err != nil {
 		return nil, fmt.Errorf("Error db.Query: %w", err)
 	}

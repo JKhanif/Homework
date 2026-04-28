@@ -4,29 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"perfume-bot/model/api_model"
 	db_model "perfume-bot/model/db_model"
 
 	"github.com/jackc/pgx/v5"
 )
 
 func (r *Repository) GetAllProducts(ctx context.Context) ([]db_model.Product, error) {
-	rows, err := r.db.Query(ctx, `
-							SELECT 
-								p.id, 
-								p.title, 
-								p.price, 
-								p.brand_id,
-								p.description,
-								p.created_at, 
-								b.id, 
-								b.title, 
-								b.description,
-								pp.tg_file_id
-							FROM products p 
-							JOIN brands b ON b.id = p.brand_id
-							JOIN product_photos pp 
-							  ON pp.product_id = p.id 
-							  AND pp.is_main = true;`)
+	rows, err := r.db.Query(ctx, queryGetAllProduct)
 	if err != nil {
 		return nil, fmt.Errorf("Error db.Query: %w", err)
 	}
@@ -41,7 +26,7 @@ func (r *Repository) GetAllProducts(ctx context.Context) ([]db_model.Product, er
 			&p.ID,
 			&p.Title,
 			&p.Price,
-			&p.BrandID,
+			&p.Brand.ID,
 			&p.Description,
 			&p.CreatedAt,
 			&b.ID,
@@ -71,7 +56,7 @@ func (r *Repository) GetProductByID(ctx context.Context, id int) (db_model.Produ
 							JOIN brands b ON b.id = p.brand_id
 							WHERE p.id = $1
 			 `, id).Scan(
-		&p.ID, &p.Title, &p.Description, &p.Price, &p.BrandID, &p.CreatedAt,
+		&p.ID, &p.Title, &p.Description, &p.Price, &p.Brand.ID, &p.CreatedAt,
 		&b.ID, &b.Title, &b.Description)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -85,7 +70,7 @@ func (r *Repository) GetProductByID(ctx context.Context, id int) (db_model.Produ
 	return p, nil
 }
 
-func (r *Repository) CreateProduct(ctx context.Context, p db_model.Product) (int, error) {
+func (r *Repository) CreateProduct(ctx context.Context, p api_model.CreateProductRequest) (int, error) {
 	var id int
 
 	err := r.db.QueryRow(ctx, `
@@ -100,12 +85,12 @@ func (r *Repository) CreateProduct(ctx context.Context, p db_model.Product) (int
 	return id, nil
 }
 
-func (r *Repository) UpdateProduct(ctx context.Context, p db_model.Product) error {
+func (r *Repository) UpdateProduct(ctx context.Context, p api_model.UpdateProductRequest) error {
 	_, err := r.db.Exec(ctx, `
 					UPDATE products
 					SET title=$1, description=$2, price=$3, brand_id=$4
 					WHERE id=$5
-					`, p.Title, p.Description, p.Price, p.BrandID, p.ID)
+					`, p.Title, p.Description, p.Price, p.BrandID)
 	if err != nil {
 		return fmt.Errorf("Error db.Exec: %w", err)
 	}

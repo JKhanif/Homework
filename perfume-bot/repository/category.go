@@ -7,7 +7,7 @@ import (
 )
 
 func (r *Repository) GetAllCategories(ctx context.Context) ([]db_model.Category, error) {
-	rows, err := r.db.Query(ctx, `SELECT id, title FROM categories`)
+	rows, err := r.db.Query(ctx, queryGetAllCategories)
 	if err != nil {
 		return nil, fmt.Errorf("Error db.Query: %w", err)
 	}
@@ -29,21 +29,7 @@ func (r *Repository) GetAllCategories(ctx context.Context) ([]db_model.Category,
 }
 
 func (r *Repository) GetProductsByCategoryID(ctx context.Context, categoryID string) ([]db_model.Product, error) {
-	rows, err := r.db.Query(ctx, `SELECT 
-    								p.id,
-    								p.title,
-    								p.description,
-    								p.price,
-    								b.id,
-									b.title,
-									b.description,
-									pp.tg_file_id
-								FROM products p
-								JOIN brands b ON b.id = p.brand_id
-								JOIN product_categories pc ON pc.product_id = p.id
-								JOIN product_photos pp ON pp.product_id = p.id
-								WHERE pc.category_id = $1
-								  AND pp.is_main = true;`, categoryID)
+	rows, err := r.db.Query(ctx, queryGetProductsByCategoryID, categoryID)
 	if err != nil {
 		return nil, fmt.Errorf("Error db.Query: %w", err)
 	}
@@ -74,4 +60,20 @@ func (r *Repository) GetProductsByCategoryID(ctx context.Context, categoryID str
 	}
 
 	return products, nil
+}
+
+func (r *Repository) SetProductCategories(ctx context.Context, productID int, categoryIDs []int) error {
+	// Удаление всех категорий
+	_, err := r.db.Exec(ctx, queryDeleteProductCategories)
+	if err != nil {
+		return fmt.Errorf("failed to delete product categories before update: %w", err)
+	}
+
+	//Добавление новых категорий
+	_, err = r.db.Exec(ctx, queryInsertProductCategories, productID, categoryIDs)
+	if err != nil {
+		return fmt.Errorf("failed to insert product category: %w", err)
+	}
+
+	return nil
 }

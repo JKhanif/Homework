@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 
 	"github.com/go-telegram/bot"
@@ -68,4 +69,38 @@ func (h *Handler) CategoryCallbackHandler(ctx context.Context, b *bot.Bot, updat
 			return
 		}
 	}
+}
+
+func (h *Handler) CategoriesCallbackHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
+	b.AnswerCallbackQuery(ctx, &bot.AnswerCallbackQueryParams{
+		CallbackQueryID: update.CallbackQuery.ID,
+	})
+	b.SendChatAction(ctx, &bot.SendChatActionParams{
+		ChatID: update.CallbackQuery.From.ID,
+		Action: models.ChatActionTyping,
+	})
+
+	categories, err := h.repo.GetAllCategories(ctx)
+	if err != nil {
+		log.Printf("Error repo.GetAllCategories: %v\n", err)
+		b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: update.CallbackQuery.From.ID,
+			Text:   "Ошибка, попробуйте позже.",
+		})
+		return
+	}
+
+	var kb models.InlineKeyboardMarkup
+	kb.InlineKeyboard = make([][]models.InlineKeyboardButton, 0)
+	for _, c := range categories {
+		var row []models.InlineKeyboardButton
+		row = append(row, models.InlineKeyboardButton{Text: c.Title, CallbackData: "category_" + strconv.Itoa(c.ID)})
+		kb.InlineKeyboard = append(kb.InlineKeyboard, row)
+	}
+
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID:      update.CallbackQuery.From.ID,
+		Text:        "Выбирай по душе",
+		ReplyMarkup: kb,
+	})
 }

@@ -29,7 +29,7 @@ func (h *Handler) Run(port string) {
 	r.GET("/products", h.GetAllProductsHandler)
 	r.GET("/product/:id", h.GetProductHandler)
 	r.DELETE("/product/:id", h.DeleteProductHandler)
-	r.PUT("/product/:id", h.ChangeProductHandler)
+	r.PUT("/product/:id", h.UpdateProductHandler)
 	r.POST("/products", h.CreateProductHandler)
 
 	r.POST("/upload", h.UpdloadHandler)
