@@ -69,3 +69,7 @@ const queryGetProductByID = `SELECT
 							FROM products p
 							JOIN brands b ON b.id = p.brand_id
 							WHERE p.id = $1`
+
+const queryCreateProduct = `INSERT INTO products (title, description, price, brand_id)
+							VALUES ($1, $2, $3, $4)
+							RETURNING id`
