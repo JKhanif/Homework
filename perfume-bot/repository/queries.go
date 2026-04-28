@@ -73,3 +73,7 @@ const queryGetProductByID = `SELECT
 const queryCreateProduct = `INSERT INTO products (title, description, price, brand_id)
 							VALUES ($1, $2, $3, $4)
 							RETURNING id`
+
+const queryUpdateProduct = `UPDATE products
+							SET title=$1, description=$2, price=$3, brand_id=$4
+							WHERE id=$5`

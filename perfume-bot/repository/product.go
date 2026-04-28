@@ -75,11 +75,7 @@ func (r *Repository) CreateProduct(ctx context.Context, p api_model.CreateProduc
 }
 
 func (r *Repository) UpdateProduct(ctx context.Context, p api_model.UpdateProductRequest) error {
-	_, err := r.db.Exec(ctx, `
-					UPDATE products
-					SET title=$1, description=$2, price=$3, brand_id=$4
-					WHERE id=$5
-					`, p.Title, p.Description, p.Price, p.BrandID)
+	_, err := r.db.Exec(ctx, queryUpdateProduct, p.Title, p.Description, p.Price, p.BrandID)
 	if err != nil {
 		return fmt.Errorf("Error db.Exec: %w", err)
 	}
@@ -88,9 +84,7 @@ func (r *Repository) UpdateProduct(ctx context.Context, p api_model.UpdateProduc
 }
 
 func (r *Repository) DeleteProduct(ctx context.Context, id int) error {
-	result, err := r.db.Exec(ctx, `
-		DELETE FROM products WHERE id=$1
-	`, id)
+	result, err := r.db.Exec(ctx, queryDeleteProduct, id)
 	if err != nil {
 		return fmt.Errorf("Error db.Exec: %w", err)
 	}
