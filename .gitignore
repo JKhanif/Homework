@@ -6,7 +6,6 @@
 __pycache__/
 *.pyc
 
-# notes (если реально не нужны)
 sheet.md
 
 # OS / IDE

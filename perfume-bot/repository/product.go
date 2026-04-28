@@ -48,14 +48,7 @@ func (r *Repository) GetProductByID(ctx context.Context, id int) (db_model.Produ
 	var p db_model.Product
 	var b db_model.Brand
 
-	err := r.db.QueryRow(ctx, `
-							SELECT
-								p.id, p.title, p.description, p.price, p.brand_id, p.created_at,
-								b.id, b.title, b.description
-							FROM products p
-							JOIN brands b ON b.id = p.brand_id
-							WHERE p.id = $1
-			 `, id).Scan(
+	err := r.db.QueryRow(ctx, queryGetProductByID, id).Scan(
 		&p.ID, &p.Title, &p.Description, &p.Price, &p.Brand.ID, &p.CreatedAt,
 		&b.ID, &b.Title, &b.Description)
 	if err != nil {
@@ -73,11 +66,7 @@ func (r *Repository) GetProductByID(ctx context.Context, id int) (db_model.Produ
 func (r *Repository) CreateProduct(ctx context.Context, p api_model.CreateProductRequest) (int, error) {
 	var id int
 
-	err := r.db.QueryRow(ctx, `
-					INSERT INTO products (title, description, price, brand_id)
-					VALUES ($1, $2, $3, $4)
-					RETURNING id
-					`, p.Title, p.Description, p.Price, p.BrandID).Scan(&id)
+	err := r.db.QueryRow(ctx, queryCreateProduct, p.Title, p.Description, p.Price, p.BrandID).Scan(&id)
 	if err != nil {
 		return 0, fmt.Errorf("Error db.QueryRow: %w", err)
 	}
@@ -86,11 +75,7 @@ func (r *Repository) CreateProduct(ctx context.Context, p api_model.CreateProduc
 }
 
 func (r *Repository) UpdateProduct(ctx context.Context, p api_model.UpdateProductRequest) error {
-	_, err := r.db.Exec(ctx, `
-					UPDATE products
-					SET title=$1, description=$2, price=$3, brand_id=$4
-					WHERE id=$5
-					`, p.Title, p.Description, p.Price, p.BrandID)
+	_, err := r.db.Exec(ctx, queryUpdateProduct, p.Title, p.Description, p.Price, p.BrandID)
 	if err != nil {
 		return fmt.Errorf("Error db.Exec: %w", err)
 	}
@@ -99,9 +84,7 @@ func (r *Repository) UpdateProduct(ctx context.Context, p api_model.UpdateProduc
 }
 
 func (r *Repository) DeleteProduct(ctx context.Context, id int) error {
-	result, err := r.db.Exec(ctx, `
-		DELETE FROM products WHERE id=$1
-	`, id)
+	result, err := r.db.Exec(ctx, queryDeleteProduct, id)
 	if err != nil {
 		return fmt.Errorf("Error db.Exec: %w", err)
 	}
