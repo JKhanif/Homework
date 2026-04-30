@@ -32,6 +32,18 @@ func (h *Handler) Run(port string) {
 	r.PUT("/product/:id", h.UpdateProductHandler)
 	r.POST("/products", h.CreateProductHandler)
 
+	r.GET("/brands", h.GetAllBrandsHandler)
+	r.GET("/brand/:id", h.GetBrandHandler)
+	r.DELETE("/brand/:id", h.DeleteBrandHandler)
+	r.PUT("/brand/:id", h.UpdateBrandHandler)
+	r.POST("/brands", h.CreateBrandHandler)
+
+	r.GET("/categories", h.GetAllCategoriesHandler)
+	r.GET("/category/:id", h.GetCategoryHandler)
+	r.DELETE("/category/:id", h.DeleteCategoryHandler)
+	r.PUT("/category/:id", h.UpdateCategoryHandler)
+	r.POST("/categories", h.CreateCategoryHandler)
+
 	r.POST("/upload", h.UpdloadHandler)
 
 	srv := &http.Server{

@@ -74,10 +74,6 @@ func (h *Handler) BrandsCallbackHandler(ctx context.Context, b *bot.Bot, update 
 
 	brands, err := h.repo.GetAllBrands(ctx)
 	if err != nil {
-
-	}
-
-	if err != nil {
 		log.Printf("Error repo.GetAllBrands: %v\n", err)
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: update.CallbackQuery.From.ID,

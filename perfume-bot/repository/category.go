@@ -2,9 +2,51 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"perfume-bot/model/api_model"
 	db_model "perfume-bot/model/db_model"
+
+	"github.com/jackc/pgx/v5"
 )
+
+func (r *Repository) CreateCategory(ctx context.Context, c api_model.CreateCategoryRequest) (int, error) {
+	var id int
+
+	err := r.db.QueryRow(ctx, queryCreateCategory, c.Title).Scan(&id)
+	if err != nil {
+		return 0, fmt.Errorf("Error db.QueryRow: %w", err)
+	}
+
+	return id, nil
+}
+
+func (r *Repository) UpdateCategory(ctx context.Context, id int, req api_model.UpdateCategoryRequest) error {
+
+	// cascade добавить
+
+	return nil
+}
+
+func (r *Repository) DeleteCategory(ctx context.Context, id int) error {
+
+	// cascade добавить
+
+	return nil
+}
+
+func (r *Repository) GetCategoryByID(ctx context.Context, id int) (api_model.CategoryResponse, error) {
+	var c api_model.CategoryResponse
+	err := r.db.QueryRow(ctx, queryGetCategoryByID, id).Scan(&c.Title)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return c, fmt.Errorf("Не найдено")
+		}
+		return c, fmt.Errorf("db error: %w", err)
+	}
+
+	return c, nil
+}
 
 func (r *Repository) GetAllCategories(ctx context.Context) ([]db_model.Category, error) {
 	rows, err := r.db.Query(ctx, queryGetAllCategories)
@@ -63,7 +105,7 @@ func (r *Repository) GetProductsByCategoryID(ctx context.Context, categoryID str
 }
 
 func (r *Repository) SetProductCategories(ctx context.Context, productID int, categoryIDs []int) error {
-	// Удаление всех категорий
+	// Удаление всех категорий продукта
 	_, err := r.db.Exec(ctx, queryDeleteProductCategories)
 	if err != nil {
 		return fmt.Errorf("failed to delete product categories before update: %w", err)

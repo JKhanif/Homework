@@ -2,6 +2,14 @@ package repository
 
 // CATEGORY CATEGORY CATEGORY CATEGORY CATEGORY CATEGORY CATEGORY CATEGORY CATEGORY CATEGORY CATEGORY CATEGORY
 
+const queryCreateCategory = `INSERT INTO categories (title)
+							VALUES ($1)
+							RETURNING id`
+
+const queryDeleteCategory = ``
+
+const queryGetCategoryByID = `SELECT FROM categories WHERE id = $1`
+
 const queryGetAllCategories = `SELECT id, title FROM categories`
 
 const queryGetProductsByCategoryID = `SELECT 
@@ -25,6 +33,14 @@ const queryDeleteProductCategories = `DELETE FROM product_categories WHERE produ
 const queryInsertProductCategories = `INSERT INTO product_categories (product_id, category_id) SELECT $1, unnest($2::int[])`
 
 // BRAND BRAND BRAND BRAND BRAND BRAND BRAND BRAND BRAND BRAND BRAND BRAND BRAND BRAND BRAND BRAND BRAND BRAND
+
+const queryCreateBrand = `INSERT INTO brands (title, description)
+							VALUES ($1, $2)
+							RETURNING id`
+
+const queryDeleteBrand = `DELETE FROM brands WHERE id = $1`
+
+const queryGetBrandByID = `SELECT FROM brands WHERE id = $1`
 
 const queryGetAllBrands = `SELECT id, title, description FROM brands`
 
@@ -74,6 +90,4 @@ const queryCreateProduct = `INSERT INTO products (title, description, price, bra
 							VALUES ($1, $2, $3, $4)
 							RETURNING id`
 
-const queryUpdateProduct = `UPDATE products
-							SET title=$1, description=$2, price=$3, brand_id=$4
-							WHERE id=$5`
+const queryDeleteProduct = `DELETE FROM products WHERE id=$1`
