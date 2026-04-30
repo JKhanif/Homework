@@ -9,33 +9,33 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (h *Handler) CreateBrandHandler(c *gin.Context) {
-	var brand api_model.CreateBrandRequest
+func (h *Handler) CreateCategoryHandler(c *gin.Context) {
+	var category api_model.CreateCategoryRequest
 
-	err := c.ShouldBindJSON(&brand)
+	err := c.ShouldBindJSON(&category)
 	if err != nil {
 		log.Printf("Error c.ShouldBindJSON: %v\n", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Неверный JSON"})
 		return
 	}
 
-	id, err := h.repo.CreateBrand(c, brand)
+	id, err := h.repo.CreateCategory(c, category)
 	if err != nil {
-		log.Printf("error repo.CreateBrand: %v\n", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при сохранении бренда в БД"})
+		log.Printf("error repo.CreateCategory: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при сохранении категории в БД"})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"Status": "Бренд добавлен!",
+		"Status": "Категория добавлена!",
 		"id":     id,
 	})
 }
 
-func (h *Handler) UpdateBrandHandler(c *gin.Context) {
-	var brand api_model.UpdateBrandRequest
+func (h *Handler) UpdateCategoryHandler(c *gin.Context) { // cascade добавить
+	var category api_model.UpdateCategoryRequest
 
-	err := c.ShouldBindJSON(&brand)
+	err := c.ShouldBindJSON(&category)
 	if err != nil {
 		log.Printf("Error c.ShouldBindJSON: %v\n", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Неверный JSON"})
@@ -50,14 +50,9 @@ func (h *Handler) UpdateBrandHandler(c *gin.Context) {
 		return
 	}
 
-	err = h.repo.UpdateBrand(c, id, brand)
+	err = h.repo.UpdateCategory(c, id, category)
 	if err != nil {
-		if err.Error() == "Бренд не найден" {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Не найдено"})
-			return
-		}
-
-		log.Printf("error repo.UpdateProductPartial: %v\n", err)
+		log.Printf("error repo.UpdateCategory: %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка БД"})
 		return
 	}
@@ -65,7 +60,7 @@ func (h *Handler) UpdateBrandHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, "Изменено")
 }
 
-func (h *Handler) DeleteBrandHandler(c *gin.Context) {
+func (h *Handler) DeleteCategoryHandler(c *gin.Context) { // cascade добавить
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
@@ -74,14 +69,14 @@ func (h *Handler) DeleteBrandHandler(c *gin.Context) {
 		return
 	}
 
-	err = h.repo.DeleteBrand(c, id)
+	err = h.repo.DeleteCategory(c, id)
 	if err != nil {
 		if err.Error() == "Нет в базе данных" {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Не найдено"})
 			return
 		}
 
-		log.Printf("error repo.DeleteBrand: %v\n", err)
+		log.Printf("error repo.DeleteCategory: %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка БД"})
 		return
 	}
@@ -89,37 +84,35 @@ func (h *Handler) DeleteBrandHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, "Удалено")
 }
 
-func (h *Handler) GetBrandHandler(c *gin.Context) {
+func (h *Handler) GetCategoryHandler(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		log.Printf("Error strconv.Atoi(idStr): %v\n", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Неверный ID"})
-		return
 	}
-
-	brand, err := h.repo.GetBrandByID(c, id)
+	category, err := h.repo.GetCategoryByID(c, id)
 	if err != nil {
 		if err.Error() == "Не найдено" {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Не найдено"})
 			return
 		}
 
-		log.Printf("error repo.GetBrandByID: %v\n", err)
+		log.Printf("error repo.GetCategoryByID: %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка БД"})
 		return
 	}
 
-	c.JSON(http.StatusOK, brand)
+	c.JSON(http.StatusOK, category)
 }
 
-func (h *Handler) GetAllBrandsHandler(c *gin.Context) {
-	brands, err := h.repo.GetAllBrands(c)
+func (h *Handler) GetAllCategoriesHandler(c *gin.Context) {
+	categories, err := h.repo.GetAllCategories(c)
 	if err != nil {
-		log.Printf("error repo.GetAllBrands: %v\n", err)
+		log.Printf("error repo.GetAllCategories: %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка БД"})
 		return
 	}
 
-	c.JSON(http.StatusOK, brands)
+	c.JSON(http.StatusOK, categories)
 }

@@ -57,9 +57,9 @@ func (h *Handler) UpdateProductHandler(c *gin.Context) {
 		return
 	}
 
-	err = h.repo.UpdateProductPartial(c, id, product)
+	err = h.repo.UpdateProduct(c, id, product)
 	if err != nil {
-		log.Printf("error repo.UpdateProductPartial: %v\n", err)
+		log.Printf("error repo.UpdateProduct: %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка БД"})
 		return
 	}

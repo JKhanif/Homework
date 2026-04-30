@@ -1,27 +1,56 @@
 package api_model
 
-import "perfume-bot/model/db_model"
+type PhotoResponse struct {
+	ID       int64  `json:"id"`
+	URL      string `json:"url"`
+	IsMain   bool   `json:"is_main"`
+	TgFileID string `json:"tg_file_id"`
+}
 
-// type ProductResponse struct {
-// 	ID          int                `json:"id"`
-// 	Title       string             `json:"title"`
-// 	Description string             `json:"description"`
-// 	Price       int                `json:"price"`
-// 	Brand       *BrandResponse     `json:"brand,omitempty"`
-// 	Categories  []CategoryResponse `json:"categories"`
-// 	Photos      []PhotoResponse    `json:"photos"`
-// }
+// BRAND BRAND BRAND BRAND BRAND BRAND BRAND BRAND BRAND BRAND BRAND BRAND BRAND BRAND BRAND BRAND BRAND BRAND
 
-// type BrandResponse struct {
-// 	ID          int    `json:"id"`
-// 	Title       string `json:"title"`
-// 	Description string `json:"description,omitempty"`
-// }
+type BrandResponse struct {
+	ID          int     `json:"id"`
+	Title       string  `json:"title"`
+	Description *string `json:"description,omitempty"`
+}
 
-// type CategoryResponse struct {
-// 	ID    int    `json:"id"`
-// 	Title string `json:"title"`
-// }
+type CreateBrandRequest struct {
+	Title       string  `json:"title" binding:"required"`
+	Description *string `json:"description"`
+}
+
+type UpdateBrandRequest struct {
+	Title       *string `json:"title"`
+	Description *string `json:"description"`
+}
+
+// CATEGORY CATEGORY CATEGORY CATEGORY CATEGORY CATEGORY CATEGORY CATEGORY CATEGORY CATEGORY CATEGORY CATEGORY
+
+type CategoryResponse struct {
+	ID    int    `json:"id"`
+	Title string `json:"title"`
+}
+
+type CreateCategoryRequest struct {
+	Title string `json:"title" binding:"required"`
+}
+
+type UpdateCategoryRequest struct {
+	Title *string `json:"title"`
+}
+
+// PRODUCT PRODUCT PRODUCT PRODUCT PRODUCT PRODUCT PRODUCT PRODUCT PRODUCT PRODUCT PRODUCT PRODUCT PRODUCT
+
+type ProductResponse struct {
+	ID          int                `json:"id"`
+	Title       string             `json:"title"`
+	Description *string            `json:"description"`
+	Price       int                `json:"price"`
+	Brand       *BrandResponse     `json:"brand,omitempty"`
+	Categories  []CategoryResponse `json:"categories"`
+	Photos      []PhotoResponse    `json:"photos"`
+}
 
 type CreateProductRequest struct {
 	Title       string `json:"title" binding:"required"`
@@ -36,18 +65,4 @@ type UpdateProductRequest struct {
 	Description *string `json:"description"`
 	Price       *int    `json:"price"`
 	BrandID     *int64  `json:"brand_id"`
-}
-
-type PhotoResponse struct {
-	ID       int64  `json:"id"`
-	URL      string `json:"url"`
-	IsMain   bool   `json:"is_main"`
-	TgFileID string `json:"tg_file_id"`
-}
-
-type ProductFull struct {
-	Product    db_model.Product
-	Brand      *db_model.Brand
-	Categories []db_model.Category
-	Photos     []db_model.ProductPhoto
 }
