@@ -22,15 +22,49 @@ func (r *Repository) CreateCategory(ctx context.Context, c api_model.CreateCateg
 }
 
 func (r *Repository) UpdateCategory(ctx context.Context, id int, req api_model.UpdateCategoryRequest) error {
+	query := "UPDATE categories SET "
+	args := make([]interface{}, 0)
+	argPos := 1
 
-	// cascade добавить
+	if req.Title != nil {
+		query += fmt.Sprintf("title=$%d,", argPos)
+		args = append(args, *req.Title)
+		argPos++
+	}
+
+	// если ничего не передали
+	if len(args) == 0 {
+		return nil
+	}
+
+	// убрать последнюю запятую
+	query = query[:len(query)-1]
+
+	query += fmt.Sprintf(" WHERE id=$%d", argPos)
+	args = append(args, id)
+
+	res, err := r.db.Exec(ctx, query, args...)
+	if err != nil {
+		return fmt.Errorf("update category: %w", err)
+	}
+
+	if res.RowsAffected() == 0 {
+		return fmt.Errorf("Категория не найдена")
+	}
 
 	return nil
 }
 
 func (r *Repository) DeleteCategory(ctx context.Context, id int) error {
+	result, err := r.db.Exec(ctx, queryDeleteCategory, id)
+	if err != nil {
+		return fmt.Errorf("Error db.Exec: %w", err)
+	}
 
-	// cascade добавить
+	rowsAffected := result.RowsAffected()
+	if rowsAffected == 0 {
+		return fmt.Errorf("Нет в базе данных")
+	}
 
 	return nil
 }
@@ -106,7 +140,7 @@ func (r *Repository) GetProductsByCategoryID(ctx context.Context, categoryID str
 
 func (r *Repository) SetProductCategories(ctx context.Context, productID int, categoryIDs []int) error {
 	// Удаление всех категорий продукта
-	_, err := r.db.Exec(ctx, queryDeleteProductCategories)
+	_, err := r.db.Exec(ctx, queryDeleteProductCategories, productID)
 	if err != nil {
 		return fmt.Errorf("failed to delete product categories before update: %w", err)
 	}
