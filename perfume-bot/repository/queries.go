@@ -6,9 +6,9 @@ const queryCreateCategory = `INSERT INTO categories (title)
 							VALUES ($1)
 							RETURNING id`
 
-const queryDeleteCategory = ``
+const queryDeleteCategory = `DELETE FROM categories WHERE id = $1`
 
-const queryGetCategoryByID = `SELECT FROM categories WHERE id = $1`
+const queryGetCategoryByID = `SELECT id, title FROM categories WHERE id = $1`
 
 const queryGetAllCategories = `SELECT id, title FROM categories`
 

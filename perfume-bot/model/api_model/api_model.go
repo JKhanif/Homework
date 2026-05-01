@@ -22,7 +22,7 @@ type CreateBrandRequest struct {
 
 type UpdateBrandRequest struct {
 	Title       *string `json:"title"`
-	Description *string `json:"description"`
+	Description *string `json:"description,omitempty"`
 }
 
 // CATEGORY CATEGORY CATEGORY CATEGORY CATEGORY CATEGORY CATEGORY CATEGORY CATEGORY CATEGORY CATEGORY CATEGORY
@@ -61,8 +61,9 @@ type CreateProductRequest struct {
 }
 
 type UpdateProductRequest struct {
-	Title       *string `json:"title"`
-	Description *string `json:"description"`
-	Price       *int    `json:"price"`
-	BrandID     *int64  `json:"brand_id"`
+	Title       *string   `json:"title,omitempty"`
+	BrandID     *int      `json:"brand_id,omitempty"`
+	Price       *int      `json:"price,omitempty"`
+	Description *string   `json:"description,omitempty"`
+	Images      *[]string `json:"images,omitempty"`
 }
