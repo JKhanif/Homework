@@ -71,7 +71,7 @@ func (r *Repository) DeleteCategory(ctx context.Context, id int) error {
 
 func (r *Repository) GetCategoryByID(ctx context.Context, id int) (api_model.CategoryResponse, error) {
 	var c api_model.CategoryResponse
-	err := r.db.QueryRow(ctx, queryGetCategoryByID, id).Scan(&c.Title)
+	err := r.db.QueryRow(ctx, queryGetCategoryByID, id).Scan(&c.ID, &c.Title)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return c, fmt.Errorf("Не найдено")
@@ -116,20 +116,27 @@ func (r *Repository) GetProductsByCategoryID(ctx context.Context, categoryID str
 	for rows.Next() {
 		var p db_model.Product
 		var b db_model.Brand
+		var brandID *int
+		var brandTitle, brandDesc *string
 		err := rows.Scan(
 			&p.ID,
 			&p.Title,
 			&p.Description,
 			&p.Price,
-			&b.ID,
-			&b.Title,
-			&b.Description,
+			&brandID,
+			&brandTitle,
+			&brandDesc,
 			&p.MainPhotoFailID,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("Error rows.Scan: %w", err)
 		}
 
+		if brandID != nil {
+			b.ID = *brandID
+			b.Title = *brandTitle
+			b.Description = brandDesc
+		}
 		p.Brand = b
 
 		products = append(products, p)

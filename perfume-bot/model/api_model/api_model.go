@@ -61,9 +61,9 @@ type CreateProductRequest struct {
 }
 
 type UpdateProductRequest struct {
-	Title       *string   `json:"title,omitempty"`
-	BrandID     *int      `json:"brand_id,omitempty"`
-	Price       *int      `json:"price,omitempty"`
-	Description *string   `json:"description,omitempty"`
-	Images      *[]string `json:"images,omitempty"`
+	Title       *string `json:"title,omitempty"`
+	BrandID     *int    `json:"brand_id,omitempty"`
+	Price       *int    `json:"price,omitempty"`
+	Description *string `json:"description,omitempty"`
+	CategoryIDs []int   `json:"category_ids,omitempty"`
 }

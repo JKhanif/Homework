@@ -9,7 +9,8 @@ type Product struct {
 	CreatedAt       time.Time `db:"created_at"`
 	Brand           Brand     `db:"brand_id"`
 	Description     string
-	MainPhotoFailID string
+	MainPhotoFailID *string
+	MainPhotoURL    *string   `db:"url"`
 }
 
 type ProductPhoto struct {

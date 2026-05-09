@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strconv"
 	minio_cl "perfume-bot/clients/minio"
 	bot_handler "perfume-bot/handler/bot"
 	http_handler "perfume-bot/handler/http"
@@ -75,7 +76,12 @@ func main() {
 
 	fileClient := minio_cl.New(mcl, os.Getenv("MINIO_BUCKET"), os.Getenv("MINIO_ENDPOINT"))
 
-	httpHandler := http_handler.NewHandler(repo, b, fileClient)
+	chatID, err := strconv.ParseInt(os.Getenv("CHAT_ID"), 10, 64)
+	if err != nil {
+		log.Fatalf("Invalid CHAT_ID: %v", err)
+	}
+
+	httpHandler := http_handler.NewHandler(repo, b, fileClient, chatID, os.Getenv("MINIO_PUBLIC_URL"))
 
 	go func() {
 		httpHandler.Run(os.Getenv("PORT"))

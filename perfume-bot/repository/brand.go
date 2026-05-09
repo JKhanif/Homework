@@ -64,7 +64,7 @@ func (r *Repository) UpdateBrand(ctx context.Context, id int, req api_model.Upda
 func (r *Repository) DeleteBrand(ctx context.Context, id int) error {
 	result, err := r.db.Exec(ctx, queryDeleteBrand, id)
 	if err != nil {
-
+		return fmt.Errorf("Error db.Exec: %w", err)
 	}
 
 	rowsAffected := result.RowsAffected()
@@ -77,7 +77,7 @@ func (r *Repository) DeleteBrand(ctx context.Context, id int) error {
 
 func (r *Repository) GetBrandByID(ctx context.Context, id int) (api_model.BrandResponse, error) {
 	var b api_model.BrandResponse
-	err := r.db.QueryRow(ctx, queryGetBrandByID, id).Scan(&b.Title, &b.Description)
+	err := r.db.QueryRow(ctx, queryGetBrandByID, id).Scan(&b.ID, &b.Title, &b.Description)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return b, fmt.Errorf("Не найдено")
@@ -122,20 +122,27 @@ func (r *Repository) GetProductsByBrandID(ctx context.Context, brandID string) (
 	for rows.Next() {
 		var p db_model.Product
 		var b db_model.Brand
+		var brandIDPTR *int
+		var brandTitle, brandDesc *string
 		err := rows.Scan(
 			&p.ID,
 			&p.Title,
 			&p.Description,
 			&p.Price,
-			&b.ID,
-			&b.Title,
-			&b.Description,
+			&brandIDPTR,
+			&brandTitle,
+			&brandDesc,
 			&p.MainPhotoFailID,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("Error rows.Scan: %w", err)
 		}
 
+		if brandIDPTR != nil {
+			b.ID = *brandIDPTR
+			b.Title = *brandTitle
+			b.Description = brandDesc
+		}
 		p.Brand = b
 		products = append(products, p)
 	}
