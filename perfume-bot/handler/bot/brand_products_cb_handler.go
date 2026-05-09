@@ -43,12 +43,17 @@ func (h *Handler) BrandCallbackHandler(ctx context.Context, b *bot.Bot, update *
 			},
 		}
 
+		brandTitle := p.Brand.Title
+		if brandTitle == "" {
+			brandTitle = "—"
+		}
+
 		_, err := b.SendPhoto(ctx, &bot.SendPhotoParams{
 			ChatID: update.CallbackQuery.From.ID,
 			Photo: &models.InputFileString{
-				Data: p.MainPhotoFailID,
+				Data: *p.MainPhotoFailID,
 			},
-			Caption:     fmt.Sprintf("<b>%s</b> | %s\n\n%d₽", p.Title, p.Brand.Title, p.Price),
+			Caption:     fmt.Sprintf("<b>%s</b> | %s\n\n%d₽", p.Title, brandTitle, p.Price),
 			ParseMode:   models.ParseModeHTML,
 			ReplyMarkup: kb,
 		})

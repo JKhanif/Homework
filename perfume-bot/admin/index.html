@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Perfume — админка</title>
+<link rel="stylesheet" href="css/style.css?v=3">
+</head>
+<body>
+<div id="app">
+  <aside id="sidebar">
+    <div class="logo">Perfume</div>
+    <nav>
+      <button class="nav-btn active" data-page="products">Товары</button>
+      <button class="nav-btn" data-page="brands">Бренды</button>
+      <button class="nav-btn" data-page="categories">Категории</button>
+    </nav>
+  </aside>
+  <main id="content">
+    <header id="topbar">
+      <h2 id="page-title">Товары</h2>
+      <button id="add-btn" class="btn btn-primary">+ Добавить</button>
+    </header>
+    <div id="page-content"></div>
+  </main>
+</div>
+
+<div id="modal" class="modal hidden">
+  <div class="modal-backdrop"></div>
+  <div class="modal-body">
+    <div class="modal-header">
+      <h3 id="modal-title"></h3>
+      <button class="modal-close">&times;</button>
+    </div>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<script src="js/app.js?v=2"></script>
+</body>
+</html>

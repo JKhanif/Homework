@@ -21,23 +21,30 @@ func (r *Repository) GetAllProducts(ctx context.Context) ([]db_model.Product, er
 
 	for rows.Next() {
 		var p db_model.Product
-		var b db_model.Brand
+		var pBrandID *int
+		var brandID *int
+		var brandTitle, brandDesc *string
 		err := rows.Scan(
 			&p.ID,
 			&p.Title,
 			&p.Price,
-			&p.Brand.ID,
+			&pBrandID,
 			&p.Description,
 			&p.CreatedAt,
-			&b.ID,
-			&b.Title,
-			&b.Description,
+			&brandID,
+			&brandTitle,
+			&brandDesc,
 			&p.MainPhotoFailID,
+			&p.MainPhotoURL,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("Error rows.Scan: %w", err)
 		}
-		p.Brand = b
+		if brandID != nil {
+			p.Brand.ID = *brandID
+			p.Brand.Title = *brandTitle
+			p.Brand.Description = brandDesc
+		}
 		products = append(products, p)
 	}
 
@@ -46,11 +53,13 @@ func (r *Repository) GetAllProducts(ctx context.Context) ([]db_model.Product, er
 
 func (r *Repository) GetProductByID(ctx context.Context, id int) (db_model.Product, error) {
 	var p db_model.Product
-	var b db_model.Brand
+	var pBrandID *int
+	var brandID *int
+	var brandTitle, brandDesc *string
 
 	err := r.db.QueryRow(ctx, queryGetProductByID, id).Scan(
-		&p.ID, &p.Title, &p.Description, &p.Price, &p.Brand.ID, &p.CreatedAt,
-		&b.ID, &b.Title, &b.Description)
+		&p.ID, &p.Title, &p.Description, &p.Price, &pBrandID, &p.CreatedAt,
+		&brandID, &brandTitle, &brandDesc)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return p, fmt.Errorf("Не найдено")
@@ -58,7 +67,11 @@ func (r *Repository) GetProductByID(ctx context.Context, id int) (db_model.Produ
 		return p, fmt.Errorf("db error: %w", err)
 	}
 
-	p.Brand = b
+	if brandID != nil {
+		p.Brand.ID = *brandID
+		p.Brand.Title = *brandTitle
+		p.Brand.Description = brandDesc
+	}
 
 	return p, nil
 }
@@ -111,6 +124,85 @@ func (r *Repository) UpdateProduct(ctx context.Context, id int, req api_model.Up
 
 	_, err := r.db.Exec(ctx, query, args...)
 	return err
+}
+
+func (r *Repository) CreateProductPhoto(ctx context.Context, productID int, url string, tgFileID string, isMain bool) (int, error) {
+	var id int
+	err := r.db.QueryRow(ctx, queryCreateProductPhoto, productID, url, tgFileID, isMain).Scan(&id)
+	if err != nil {
+		return 0, fmt.Errorf("Error db.QueryRow create product_photo: %w", err)
+	}
+	return id, nil
+}
+
+func (r *Repository) UnsetMainPhoto(ctx context.Context, productID int) error {
+	_, err := r.db.Exec(ctx, queryUnsetMainPhoto, productID)
+	if err != nil {
+		return fmt.Errorf("Error db.Exec unset main photo: %w", err)
+	}
+	return nil
+}
+
+func (r *Repository) GetPhotoByID(ctx context.Context, photoID int) (*db_model.ProductPhoto, error) {
+	var ph db_model.ProductPhoto
+	err := r.db.QueryRow(ctx, queryGetPhotoByID, photoID).Scan(&ph.ID, &ph.ProductID, &ph.URL, &ph.TgFileID, &ph.IsMain)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf("Не найдено")
+		}
+		return nil, fmt.Errorf("db error: %w", err)
+	}
+	return &ph, nil
+}
+
+func (r *Repository) GetProductPhotos(ctx context.Context, productID int) ([]db_model.ProductPhoto, error) {
+	rows, err := r.db.Query(ctx, queryGetPhotosByProductID, productID)
+	if err != nil {
+		return nil, fmt.Errorf("Error db.Query: %w", err)
+	}
+	defer rows.Close()
+
+	photos := make([]db_model.ProductPhoto, 0)
+	for rows.Next() {
+		var ph db_model.ProductPhoto
+		err := rows.Scan(&ph.ID, &ph.ProductID, &ph.URL, &ph.TgFileID, &ph.IsMain)
+		if err != nil {
+			return nil, fmt.Errorf("Error rows.Scan: %w", err)
+		}
+		photos = append(photos, ph)
+	}
+	return photos, nil
+}
+
+func (r *Repository) DeletePhoto(ctx context.Context, photoID int) error {
+	result, err := r.db.Exec(ctx, queryDeletePhoto, photoID)
+	if err != nil {
+		return fmt.Errorf("Error db.Exec: %w", err)
+	}
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("Не найдено")
+	}
+	return nil
+}
+
+func (r *Repository) DeleteProductPhotos(ctx context.Context, productID int) error {
+	_, err := r.db.Exec(ctx, queryDeleteProductPhotos, productID)
+	if err != nil {
+		return fmt.Errorf("Error db.Exec delete product photos: %w", err)
+	}
+	return nil
+}
+
+func (r *Repository) SetMainPhoto(ctx context.Context, photoID int, productID int) error {
+	_, err := r.db.Exec(ctx, queryUnsetMainPhoto, productID)
+	if err != nil {
+		return fmt.Errorf("Error db.Exec unset main: %w", err)
+	}
+	_, err = r.db.Exec(ctx, querySetMainPhoto, photoID, productID)
+	if err != nil {
+		return fmt.Errorf("Error db.Exec set main: %w", err)
+	}
+	return nil
 }
 
 func (r *Repository) DeleteProduct(ctx context.Context, id int) error {

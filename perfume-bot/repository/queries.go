@@ -22,7 +22,7 @@ const queryGetProductsByCategoryID = `SELECT
 											b.description,
 											pp.tg_file_id
 										FROM products p
-										JOIN brands b ON b.id = p.brand_id
+										LEFT JOIN brands b ON b.id = p.brand_id
 										JOIN product_categories pc ON pc.product_id = p.id
 										JOIN product_photos pp ON pp.product_id = p.id
 										WHERE pc.category_id = $1
@@ -40,7 +40,7 @@ const queryCreateBrand = `INSERT INTO brands (title, description)
 
 const queryDeleteBrand = `DELETE FROM brands WHERE id = $1`
 
-const queryGetBrandByID = `SELECT FROM brands WHERE id = $1`
+const queryGetBrandByID = `SELECT id, title, description FROM brands WHERE id = $1`
 
 const queryGetAllBrands = `SELECT id, title, description FROM brands`
 
@@ -54,7 +54,7 @@ const queryGetProductsByBrandID = `SELECT
 										b.description,
 										pp.tg_file_id
 									FROM products p
-									JOIN brands b ON b.id = p.brand_id
+									LEFT JOIN brands b ON b.id = p.brand_id
 									JOIN product_photos pp ON pp.product_id = p.id 
 									WHERE p.brand_id = $1
 									AND pp.is_main = true;
@@ -72,10 +72,11 @@ const queryGetAllProduct = `SELECT
 								b.id, 
 								b.title, 
 								b.description,
-								pp.tg_file_id
+								pp.tg_file_id,
+								pp.url
 							FROM products p 
-							JOIN brands b ON b.id = p.brand_id
-							JOIN product_photos pp 
+							LEFT JOIN brands b ON b.id = p.brand_id
+							LEFT JOIN product_photos pp 
 							  ON pp.product_id = p.id 
 							  AND pp.is_main = true;`
 
@@ -83,7 +84,7 @@ const queryGetProductByID = `SELECT
 								p.id, p.title, p.description, p.price, p.brand_id, p.created_at,
 								b.id, b.title, b.description
 							FROM products p
-							JOIN brands b ON b.id = p.brand_id
+							LEFT JOIN brands b ON b.id = p.brand_id
 							WHERE p.id = $1`
 
 const queryCreateProduct = `INSERT INTO products (title, description, price, brand_id)
@@ -91,3 +92,17 @@ const queryCreateProduct = `INSERT INTO products (title, description, price, bra
 							RETURNING id`
 
 const queryDeleteProduct = `DELETE FROM products WHERE id=$1`
+
+const queryCreateProductPhoto = `INSERT INTO product_photos (product_id, url, tg_file_id, is_main) VALUES ($1, $2, $3, $4) RETURNING id`
+
+const queryUnsetMainPhoto = `UPDATE product_photos SET is_main = false WHERE product_id = $1 AND is_main = true`
+
+const queryGetPhotosByProductID = `SELECT id, product_id, url, tg_file_id, is_main FROM product_photos WHERE product_id = $1 ORDER BY is_main DESC, id ASC`
+
+const queryDeletePhoto = `DELETE FROM product_photos WHERE id = $1`
+
+const queryDeleteProductPhotos = `DELETE FROM product_photos WHERE product_id = $1`
+
+const queryGetPhotoByID = `SELECT id, product_id, url, tg_file_id, is_main FROM product_photos WHERE id = $1`
+
+const querySetMainPhoto = `UPDATE product_photos SET is_main = true WHERE id = $1 AND product_id = $2`
