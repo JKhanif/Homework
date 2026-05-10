@@ -10,6 +10,103 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+func (r *Repository) GetProductsByBrandIDPage(ctx context.Context, brandID int, limit int, offset int) ([]db_model.Product, error) {
+	rows, err := r.db.Query(ctx, queryGetProductsByBrandPage, brandID, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("Error db.Query: %w", err)
+	}
+	defer rows.Close()
+
+	products := make([]db_model.Product, 0)
+	for rows.Next() {
+		var p db_model.Product
+		var brandID *int
+		var brandTitle, brandDesc *string
+		err := rows.Scan(
+			&p.ID, &p.Title, &p.Description, &p.Price,
+			&brandID, &brandTitle, &brandDesc,
+			&p.MainPhotoFailID,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("Error rows.Scan: %w", err)
+		}
+		if brandID != nil {
+			p.Brand.ID = *brandID
+			p.Brand.Title = *brandTitle
+			p.Brand.Description = brandDesc
+		}
+
+		products = append(products, p)
+	}
+
+	return products, nil
+}
+
+func (r *Repository) GetProductsByCategoryIDPage(ctx context.Context, categoryID int, limit int, offset int) ([]db_model.Product, error) {
+	rows, err := r.db.Query(ctx, queryGetProductsByCategoryPage, categoryID, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("Error db.Query: %w", err)
+	}
+	defer rows.Close()
+
+	products := make([]db_model.Product, 0)
+	for rows.Next() {
+		var p db_model.Product
+		var brandID *int
+		var brandTitle, brandDesc *string
+		err := rows.Scan(
+			&p.ID, &p.Title, &p.Description, &p.Price,
+			&brandID, &brandTitle, &brandDesc,
+			&p.MainPhotoFailID,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("Error rows.Scan: %w", err)
+		}
+		if brandID != nil {
+			p.Brand.ID = *brandID
+			p.Brand.Title = *brandTitle
+			p.Brand.Description = brandDesc
+		}
+
+		products = append(products, p)
+	}
+
+	return products, nil
+}
+
+func (r *Repository) GetAllProductsPage(ctx context.Context, limit int, offset int) ([]db_model.Product, error) {
+	rows, err := r.db.Query(ctx, queryGetAllProductsPage, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("Error db.Query: %w", err)
+	}
+	defer rows.Close()
+
+	products := make([]db_model.Product, 0)
+	for rows.Next() {
+		var p db_model.Product
+		var pBrandID *int
+		var brandID *int
+		var brandTitle, brandDesc *string
+		err := rows.Scan(
+			&p.ID, &p.Title, &p.Price, &pBrandID, &p.Description,
+			&brandID, &brandTitle, &brandDesc,
+			&p.MainPhotoFailID, &p.MainPhotoURL,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("Error rows.Scan: %w", err)
+		}
+		if brandID != nil {
+			p.Brand.ID = *brandID
+			p.Brand.Title = *brandTitle
+			p.Brand.Description = brandDesc
+		}
+
+		products = append(products, p)
+	}
+
+	return products, nil
+}
+
 func (r *Repository) GetAllProducts(ctx context.Context) ([]db_model.Product, error) {
 	rows, err := r.db.Query(ctx, queryGetAllProduct)
 	if err != nil {
