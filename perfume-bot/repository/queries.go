@@ -106,3 +106,36 @@ const queryDeleteProductPhotos = `DELETE FROM product_photos WHERE product_id = 
 const queryGetPhotoByID = `SELECT id, product_id, url, tg_file_id, is_main FROM product_photos WHERE id = $1`
 
 const querySetMainPhoto = `UPDATE product_photos SET is_main = true WHERE id = $1 AND product_id = $2`
+
+const queryGetAllProductsPage = `SELECT 
+									p.id, p.title, p.price, p.brand_id, p.description,
+									b.id, b.title, b.description,
+									pp.tg_file_id, pp.url
+								FROM products p
+								LEFT JOIN brands b ON b.id = p.brand_id
+								LEFT JOIN product_photos pp ON pp.product_id = p.id AND pp.is_main = true
+								ORDER BY p.id DESC
+								LIMIT $1 OFFSET $2`
+
+const queryGetProductsByCategoryPage = `SELECT 
+											p.id, p.title, p.description, p.price,
+											b.id, b.title, b.description,
+											pp.tg_file_id
+										FROM products p
+										LEFT JOIN brands b ON b.id = p.brand_id
+										JOIN product_categories pc ON pc.product_id = p.id
+										JOIN product_photos pp ON pp.product_id = p.id
+										WHERE pc.category_id = $1 AND pp.is_main = true
+										ORDER BY p.id DESC
+										LIMIT $2 OFFSET $3`
+
+const queryGetProductsByBrandPage = `SELECT
+										p.id, p.title, p.description, p.price,
+										b.id, b.title, b.description,
+										pp.tg_file_id
+									FROM products p
+									LEFT JOIN brands b ON b.id = p.brand_id
+									JOIN product_photos pp ON pp.product_id = p.id
+									WHERE p.brand_id = $1 AND pp.is_main = true
+									ORDER BY p.id DESC
+									LIMIT $2 OFFSET $3`

@@ -6,11 +6,11 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"strconv"
 	minio_cl "perfume-bot/clients/minio"
 	bot_handler "perfume-bot/handler/bot"
 	http_handler "perfume-bot/handler/http"
 	"perfume-bot/repository"
+	"strconv"
 
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
@@ -65,10 +65,13 @@ func main() {
 	}
 
 	b.RegisterHandler(bot.HandlerTypeMessageText, "start", bot.MatchTypeCommand, botHandler.StartHandler)
-	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, "catalog", bot.MatchTypeExact, botHandler.CatalogCallbackHandler)
+	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, "main_menu", bot.MatchTypeExact, botHandler.MainMenuHandler)
+	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, "catalog_", bot.MatchTypePrefix, botHandler.CatalogCallbackHandler)
 	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, "categories", bot.MatchTypeExact, botHandler.CategoriesCallbackHandler)
+	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, "cat_page_", bot.MatchTypePrefix, botHandler.CategoryCallbackHandler)
 	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, "category_", bot.MatchTypePrefix, botHandler.CategoryCallbackHandler)
 	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, "brands", bot.MatchTypeExact, botHandler.BrandsCallbackHandler)
+	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, "br_page_", bot.MatchTypePrefix, botHandler.BrandCallbackHandler)
 	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, "brand_", bot.MatchTypePrefix, botHandler.BrandCallbackHandler)
 
 	setCommands(b, ctx)
